@@ -1,0 +1,23 @@
+[
+    {
+        "Employee ID": "EMP003",
+        "Name": "Viral Maru",
+        "Email": "viral682@gmail.com",
+        "Days Worked": 3,
+        "Pay Per Day": 1100
+    },
+    {
+        "Employee ID": "EMP002",
+        "Name": "Omkar Deshmukh",
+        "Email": "omkar682@gmail.com",
+        "Days Worked": 1,
+        "Pay Per Day": 1000
+    },
+    {
+        "Employee ID": "EMP001",
+        "Name": "NAITIK KUSHWAHA",
+        "Email": "naitikk682@gmail.com",
+        "Days Worked": 6,
+        "Pay Per Day": 1200
+    }
+]

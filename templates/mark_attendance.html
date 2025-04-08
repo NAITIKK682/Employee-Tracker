@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: 500;
+            color: #555;
+        }
+        select, input[type="number"], input[type="date"], input[type="month"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button.mark-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #4cc9f0;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        button.mark-btn:hover {
+            background-color: #3da5c6;
+        }
+        .date-fields {
+            display: flex;
+            gap: 15px;
+        }
+        .date-fields > div {
+            flex: 1;
+        }
+        @media (max-width: 480px) {
+            .date-fields {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-clock"></i> Mark Attendance</h1>
+
+        <form action="{{ url_for('mark_attendance') }}" method="POST">
+            <!-- Employee Selection -->
+            <label for="employee_id">Select Employee:</label>
+            <select id="employee_id" name="employee_id" required>
+                {% if employees %}
+                    {% for emp in employees %}
+                        <option value="{{ emp['Employee ID'] }}">{{ emp['Name'] }} ({{ emp['Employee ID'] }})</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled>No employees available</option>
+                {% endif %}
+            </select>
+
+            <!-- Date Fields -->
+            <div class="date-fields">
+                <div>
+                    <label for="attendance_date">Attendance Date:</label>
+                    <input type="date" id="attendance_date" name="attendance_date" required>
+                </div>
+                <div>
+                    <label for="month">For Month:</label>
+                    <input type="month" id="month" name="month" required>
+                </div>
+            </div>
+
+            <!-- Days Worked Input -->
+            <label for="days_worked">Days Worked:</label>
+            <input type="number" id="days_worked" name="days_worked" min="1" max="31" placeholder="Enter days worked" required>
+
+            <!-- Submit Button -->
+            <button type="submit" class="mark-btn">
+                <i class="fas fa-check"></i> Submit
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Set default date to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('attendance_date').value = dateStr;
+            
+            // Set default month to current month
+            const monthStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('month').value = monthStr;
+        });
+    </script>
+</body>
+</html>

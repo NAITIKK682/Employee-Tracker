@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Modern CSS Framework -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables for enhanced tables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #3a7bd5;
+            --secondary-color: #f8f9fc;
+            --accent-color: #00d2ff;
+        }
+        
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .card {
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1rem 0 rgba(58, 59, 69, 0.1);
+            border: none;
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        /* Original table styles preserved */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        /* Print-specific styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #salary-slip, #salary-slip * {
+                visibility: visible;
+            }
+            #salary-slip {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+
+           <!-- Sidebar Navigation -->
+<div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+    <div class="position-sticky pt-3" style="color: red;">
+        <div class="text-center mb-4">
+            <i class="fas fa-user-clock fa-3x mb-3"></i>
+            <h4>Attendance Pro</h4>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('index') }}" style="color: white;">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('add_employee') }}" style="color: white;">
+                    <i class="fas fa-user-plus me-2"></i>Add Employee
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#salary-slips" style="color: white;">
+                    <i class="fas fa-file-pdf me-2"></i>Salary Slips
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Attendance Records</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generatePDF()">
+                                <i class="fas fa-file-pdf me-1"></i> Export as PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Original Content Preserved Exactly -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <nav class="mb-3">
+                            <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-primary me-2">
+                                <i class="fas fa-home me-1"></i> Home
+                            </a>
+                            <a href="{{ url_for('add_employee') }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-user-plus me-1"></i> Add Employee
+                            </a>
+                        </nav>
+
+                        <div class="table-responsive">
+                            <table id="attendanceTable" class="table table-striped table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee ID</th>
+                                        <th>Name</th>
+                                        <th>Days Worked</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for emp in employees %}
+                                    <tr>
+                                        <td>{{ emp['Employee ID'] }}</td>
+                                        <td>{{ emp['Name'] }}</td>
+                                        <td>{{ emp['Days Worked'] }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="generateSalarySlip('{{ emp['Employee ID'] }}', '{{ emp['Name'] }}', {{ emp['Days Worked'] }})">
+                                                <i class="fas fa-file-invoice-dollar me-1"></i> Salary Slip
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Salary Slip Template (Hidden) -->
+                <div id="salary-slip" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="text-center">Salary Slip</h3>
+                            <h5 class="text-center" id="slip-month"></h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <p><strong>Employee ID:</strong> <span id="slip-id"></span></p>
+                                    <p><strong>Employee Name:</strong> <span id="slip-name"></span></p>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <p><strong>Days Worked:</strong> <span id="slip-days"></span></p>
+                                    <p><strong>Date:</strong> <span id="slip-date"></span></p>
+                                </div>
+                            </div>
+                            
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Earnings</th>
+                                        <th>Amount (₹)</th>
+                                        <th>Deductions</th>
+                                        <th>Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Basic Salary</td>
+                                        <td id="basic-salary">₹15,000</td>
+                                        <td>Tax</td>
+                                        <td id="tax">₹1,500</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Allowances</td>
+                                        <td id="allowances">₹3,000</td>
+                                        <td>Other Deductions</td>
+                                        <td id="other-deductions">₹500</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total Earnings</strong></td>
+                                        <td><strong id="total-earnings">₹18,000</strong></td>
+                                        <td><strong>Total Deductions</strong></td>
+                                        <td><strong id="total-deductions">₹2,000</strong></td>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <td colspan="3"><strong>Net Pay</strong></td>
+                                        <td><strong id="net-pay">₹16,000</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="mt-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Bank Details:</strong></p>
+                                        <p class="mb-1">Bank Name: Example Bank</p>
+                                        <p class="mb-1">Account Number: XXXX-XXXX-XXXX</p>
+                                        <p class="mb-1">IFSC Code: EXMP0001</p>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <div class="signature-box mt-4">
+                                            <p class="mb-1">_Naitik Kushwaha_</p>
+                                            <p class="mb-0">Authorized Signatory</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modern JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        // Initialize DataTable
+        $(document).ready(function() {
+            $('#attendanceTable').DataTable({
+                responsive: true
+            });
+            
+            // Set current month in salary slip template
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const currentDate = new Date();
+            document.getElementById('slip-month').textContent = months[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+            document.getElementById('slip-date').textContent = currentDate.toLocaleDateString();
+        });
+        
+        // Generate Salary Slip PDF
+        function generateSalarySlip(empId, empName, daysWorked) {
+            // Update the slip template with employee data
+            document.getElementById('slip-id').textContent = empId;
+            document.getElementById('slip-name').textContent = empName;
+            document.getElementById('slip-days').textContent = daysWorked;
+            
+            // Calculate salary based on days worked (example calculation)
+            const basicSalary = Math.round((15000 / 26) * daysWorked);
+            const allowances = Math.round(basicSalary * 0.2);
+            const tax = Math.round(basicSalary * 0.1);
+            const otherDeductions = 500;
+            const totalEarnings = basicSalary + allowances;
+            const totalDeductions = tax + otherDeductions;
+            const netPay = totalEarnings - totalDeductions;
+            
+            // Format with Indian Rupees symbol
+            const formatCurrency = (amount) => {
+                return '₹' + amount.toLocaleString('en-IN');
+            };
+            
+            // Update salary values
+            document.getElementById('basic-salary').textContent = formatCurrency(basicSalary);
+            document.getElementById('allowances').textContent = formatCurrency(allowances);
+            document.getElementById('tax').textContent = formatCurrency(tax);
+            document.getElementById('other-deductions').textContent = formatCurrency(otherDeductions);
+            document.getElementById('total-earnings').textContent = formatCurrency(totalEarnings);
+            document.getElementById('total-deductions').textContent = formatCurrency(totalDeductions);
+            document.getElementById('net-pay').textContent = formatCurrency(netPay);
+            
+            // Generate PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add company logo and header
+            doc.setFontSize(18);
+            doc.setTextColor(58, 123, 213);
+            doc.text('Salary Slip', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(document.getElementById('slip-month').textContent, 105, 28, { align: 'center' });
+            
+            // Add employee details
+            doc.setFontSize(10);
+            doc.text(`Employee ID: ${empId}`, 15, 40);
+            doc.text(`Employee Name: ${empName}`, 15, 46);
+            doc.text(`Days Worked: ${daysWorked}`, 15, 52);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 58);
+            
+            // Add salary table
+            doc.autoTable({
+                startY: 65,
+                head: [['Earnings', 'Amount (₹)', 'Deductions', 'Amount (₹)']],
+                body: [
+                    ['Basic Salary', formatCurrency(basicSalary), 'Tax', formatCurrency(tax)],
+                    ['Allowances', formatCurrency(allowances), 'Other Deductions', formatCurrency(otherDeductions)],
+                    ['Total Earnings', formatCurrency(totalEarnings), 'Total Deductions', formatCurrency(totalDeductions)],
+                    ['', '', 'Net Pay', formatCurrency(netPay)]
+                ],
+                styles: {
+                    halign: 'center',
+                    cellPadding: 3,
+                    fontSize: 10
+                },
+                headStyles: {
+                    fillColor: [58, 123, 213],
+                    textColor: 255
+                },
+                columnStyles: {
+                    0: { halign: 'left' },
+                    2: { halign: 'left' }
+                }
+            });
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.text('This is a computer generated document and does not require signature.', 105, doc.lastAutoTable.finalY + 15, { align: 'center' });
+            
+            // Save the PDF
+            doc.save(`Salary_Slip_${empId}_${new Date().getMonth()+1}_${new Date().getFullYear()}.pdf`);
+        }
+        
+        // Export entire table as PDF
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(18);
+            doc.setTextColor(58, 123, 213);
+            doc.text('Attendance Records', 105, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 21, { align: 'center' });
+            
+            // Add table
+            doc.autoTable({
+                startY: 25,
+                html: '#attendanceTable',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [58, 123, 213],
+                    textColor: 255
+                },
+                columnStyles: {
+                    3: { cellWidth: 30 } // Actions column
+                }
+            });
+            
+            // Save the PDF
+            doc.save(`Attendance_Records_${new Date().getMonth()+1}_${new Date().getFullYear()}.pdf`);
+        }
+    </script>
+</body>
+</html>

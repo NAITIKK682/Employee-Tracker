@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-users-cog"></i> Employee Attendance & Salary Tracker</h1>
+        
+        <div class="nav-buttons">
+            <a href="{{ url_for('add_employee') }}" class="add-btn">
+                <i class="fas fa-user-plus"></i> Add Employee
+            </a>
+            <a href="{{ url_for('attendance') }}" class="attendance-btn" style="display: inline-flex; align-items: center; background-color: #4cc9f0; color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.3s ease; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <i class="fas fa-calendar-check"></i> View Attendance
+            </a>
+            <!-- New Mark Attendance Button -->
+            <a href="{{ url_for('mark_attendance') }}" class="mark-attendance-btn" style="display: inline-flex; align-items: center; background-color: #ff6b6b; color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.3s ease; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <i class="fas fa-clock"></i> Mark Attendance
+            </a>
+        </div>
+
+        <h2><i class="fas fa-list"></i> Employee Records</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Days Worked</th>
+                    <th>Pay Per Day</th>
+                    <th>Salary</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>{{ emp['Employee ID'] }}</td>
+                    <td>{{ emp['Name'] }}</td>
+                    <td>{{ emp['Email'] }}</td>
+                    <td>{{ emp['Days Worked'] }}</td>
+                    <td>₹{{ emp['Pay Per Day'] }}</td>
+                    <td>₹{{ emp['Days Worked'] * emp['Pay Per Day'] }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_employee', employee_id=emp['Employee ID']) }}" method="POST">
+                            <button type="submit" class="delete-btn">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2><i class="fas fa-chart-line"></i> Insights</h2>
+        <div class="insights-container">
+            <div class="insight-card">
+                <h3>Average Salary</h3>
+                <p>₹{{ "%.2f"|format(avg_salary) }}</p>
+            </div>
+            <div class="insight-card">
+                <h3>Highest Earner</h3>
+                <p>{{ highest_earner }}</p>
+            </div>
+            <div class="insight-card">
+                <h3>Lowest Earner</h3>
+                <p>{{ lowest_earner }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
